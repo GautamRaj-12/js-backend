@@ -6,7 +6,7 @@ const app = express()
 
 const PORT = process.env.PORT || 4000
 
-app.get('/jokes',(req,res)=>{
+app.get('/api/jokes',(req,res)=>{
     const jokes = [
         {
             id:1,
