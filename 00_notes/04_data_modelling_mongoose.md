@@ -4,7 +4,7 @@
 -  First, it's important to have clarity about the fields, what data will be stored. Analyze it thoroughly. Then, we will decide how to do it, where to do it.
 
 > In hindi: Sabse pehle fields ke baare me clarity rakhna hoga, kya kaya data store honge. Achhe se analyse karna hoga.
-> Then decide karenge ki kaise karna hoga, kaha karna hog
+> Then decide karenge ki kaise karna hoga, kaha karna hoga
 
 ### Tools for Data modelling
 - **moon-modeler** (paid)
