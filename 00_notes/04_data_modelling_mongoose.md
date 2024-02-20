@@ -13,7 +13,7 @@
 
 ### Example
 
-![To Do object modelling](image-1.png)
+![To Do object modelling](images/image-1.png)
 
 - ***So first do this object modelling in any tool or on pen an paper. Ask questions to yourself.***
 
@@ -24,7 +24,7 @@
 ### Creating models
 - Directory Structure
 
-  ![Directory Structure](image-2.png)
+  ![Directory Structure](images/image-2.png)
 
 - `filename.models.js` is a good convention.
 - I am going to define user modelling. So I will go to `users.models.js`

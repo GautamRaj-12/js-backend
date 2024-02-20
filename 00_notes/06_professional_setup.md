@@ -8,18 +8,18 @@
 - Add a `dev` script to run the server in development mode using nodemon. We can run `npm run dev` to start the server in development mode.
 - Every professional project must have `prettier` installed as a dev dependency. Prettier is a code formatter that helps maintain consistent code style across your project. Install it using `npm i -D prettier`
 
-![alt text](image-17.png)
+![alt text](images/image-17.png)
 
 - After installing Prettier, you might want to create a configuration file (`.prettierrc` or `prettier.config.js`) in the root of your project to customize its settings according to your preferences.
 - A sample `.prettierrc` file
   
-  ![alt text](image-18.png)
+  ![alt text](images/image-18.png)
 
 - But we don't want changes to occur in some important files like `.env` or files in `node_modules` folder.
 - So ideally we would like to have a `.prettierignore` file.
 - A sample `.prettierignore` file.
 
-  ![alt text](image-19.png)
+  ![alt text](images/image-19.png)
 - Some prettier and ESLint articles to study:
   - [how-to-use-prettier-vscode](https://www.robinwieruch.de/how-to-use-prettier-vscode/)
   - [vscode-eslint](https://www.robinwieruch.de/vscode-eslint/)
@@ -43,6 +43,6 @@
   
 - Additionally if you want to push all these to git. Then we have a problem right now as empty folders are not added by git. So we can create  a `.gitkeep` file inside every folder just so that git can add them.
 
-![alt text](image-20.png)
+![alt text](images/image-20.png)
 
-![alt text](image-21.png)
+![alt text](images/image-21.png)

@@ -2,7 +2,7 @@
 
 - `models` directory structure
 
-  ![alt text](image-15.png)
+  ![alt text](images/image-15.png)
 
 - `user.models.js`
   
@@ -144,7 +144,7 @@
 
 - `models` directory structure
   
-  ![alt text](image-16.png)
+  ![alt text](images/image-16.png)
 
 - `hospital.models.js`
   

@@ -11,7 +11,7 @@
 
 ###  Workflow
 
-![Workflow](image.png)
+![Workflow](images/image.png)
 
 ### Backend in JS
 - A JS based backend deals with three things 

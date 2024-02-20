@@ -9,7 +9,7 @@
 - Open VS code terminal or terminal of your choice inside this folder.
 - Type and run `npm init`
 
-    ![alt text](image-3.png)
+    ![alt text](images/image-3.png)
 
 - It will ask for the following things with some of them having default values:
   - package name
@@ -25,11 +25,11 @@
 - We can also run `npm init -y` to skip this menu.
 - This will create a `package.json` file where we can change all this if we want.
   
-  ![alt text](image-4.png)
+  ![alt text](images/image-4.png)
 
 - package.json
 
-  ![alt text](image-5.png)
+  ![alt text](images/image-5.png)
 
 ### Creating a basic server
 - We will be using `express` framework to create a basic server.
@@ -38,7 +38,7 @@
 - Install express using `npm install express` command in terminal
 - Create a file `index.js` in the root directory. Here is the code for basic server setup.
   
-  ![alt text](image-11.png)
+  ![alt text](images/image-11.png)
 
 - ***Explaination***
   - `const express = require('express');`
@@ -56,19 +56,19 @@
 
 - In the terminal type and run: `node index.js`
   
-  ![alt text](image-8.png)
+  ![alt text](images/image-8.png)
 
 - And now if we go to `localhost:3000` in our browser
   
-  ![alt text](image-9.png)
+  ![alt text](images/image-9.png)
 
 - And now if we go to `localhost:3000/login` in our browser
   
-  ![alt text](image-10.png)
+  ![alt text](images/image-10.png)
 
 - ***Important***: Running our app using `node index.js` is not a good way instead we can define a **start** script inside package.json file to run our app. This is how we define a start script.
   
-  ![alt text](image-12.png)
+  ![alt text](images/image-12.png)
 
 - Now we can simply run our app using `npm run start` or `npm start` in terminal.
 - We should do this because:
@@ -84,11 +84,11 @@
 - Then create a `.env` file in the root directory. 
 - In the `.env` file, specify all the environment variables.
   
-  ![alt text](image-14.png)
+  ![alt text](images/image-14.png)
 
 - Using the environment variable in `.env` in `index.js`
   
-  ![alt text](image-13.png)
+  ![alt text](images/image-13.png)
 
 - ***Explaination***:
   - `require('dotenv').config();`
