@@ -93,3 +93,35 @@ class ApiError extends Error {
 export { ApiError };
 
 ```
+
+## Code Explanation:
+
+### **`ApiError` Class:**
+
+- Extends the built-in `Error` class to create a custom error class specifically for API-related errors.
+
+### **Constructor Parameters:**
+
+- `statusCode`: HTTP status code to indicate the type of error (e.g., 404 for not found, 500 for internal server error).
+
+- `message`: A human-readable error message. Defaults to "Something went wrong" if not provided.
+
+- `errors`: An array containing additional error details or validation errors.
+
+- `stack`: The stack trace for the error. If not provided, it captures the stack trace at the point of instantiation.
+
+### **Additional Properties:**
+
+- `statusCode`: Represents the HTTP status code of the error.
+
+- `data`: Can be used to attach additional data related to the error (initialized as `null`).
+
+- `message`: The error message.
+
+- `success`: Indicates whether the operation was successful (initialized as `false`).
+
+- `errors`: An array to hold additional error details or validation errors.
+
+### **Summary:**
+
+This `ApiError` class provides a standardized way to handle and represent API-related errors, including the ability to specify HTTP status codes, error messages, and additional error details. It enhances the error-handling capabilities in API development.
