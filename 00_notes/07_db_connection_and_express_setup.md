@@ -1,6 +1,7 @@
 ## Handling DB Connection: Naive and Professional
 
 ### Two important points
+
 ---
 - DB se baat karne par problems aa sakti hai to **try-catch** me wrap karo humesha. Ya phir **promises** bhi le sakte hai.
 - DB is always in another continent - means time lagega - **async-await**
