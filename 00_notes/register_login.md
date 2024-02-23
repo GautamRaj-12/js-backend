@@ -1,3 +1,161 @@
+# Steps
+- **Assumptions**: DB connection done
+  
+1. **model banao**
+## `user.model.js`
+
+### Strategy
+- schema banao, export karo schema ko
+- 'pre' hook ka use karke hashing bhi kar do using bcrypt.
+- 'methods' ka use karke password compare bhi kar do.
+- 'methods' ka hi use karke two functions bana lo jinse access token aur refresh token generate kara lo
+
+```
+// Import necessary modules
+import mongoose from "mongoose";
+import jwt from "jsonwebtoken";
+import bcrypt from "bcrypt";
+
+// Define the user schema using Mongoose
+const userSchema = new mongoose.Schema(
+  {
+    // User's watch history, an array of Video ObjectId references
+    watchHistory: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Video",
+      },
+    ],
+    // User's username with constraints
+    username: {
+      type: String,
+      required: true,
+      unique: true,
+      lowercase: true,
+      trim: true,
+      index: true, // Index for efficient query performance
+    },
+    // User's email with constraints
+    email: {
+      type: String,
+      required: true,
+      unique: true,
+      lowercase: true,
+      trim: true,
+    },
+    // User's full name
+    fullName: {
+      type: String,
+      required: true,
+    },
+    // User's avatar, stored as a Cloudinary URL
+    avatar: {
+      type: String,
+      required: true,
+    },
+    // User's cover image, stored as a Cloudinary URL
+    coverImage: {
+      type: String,
+    },
+    // User's hashed password with a required constraint
+    password: {
+      type: String,
+      required: [true, "Password is required"],
+    },
+    // User's refresh token for JWT token refresh mechanism
+    refreshToken: {
+      type: String,
+    },
+  },
+  { timestamps: true } // Add timestamps for createdAt and updatedAt
+);
+
+// Pre-save hook to hash the password before saving to the database
+userSchema.pre("save", async function (next) {
+  if (!this.isModified("password")) return next(); // Only hash if the password is modified
+  this.password = await bcrypt.hash(this.password, 10); // Hash the password using bcrypt
+  next();
+});
+
+// Method to check if the provided password is correct
+userSchema.methods.isPasswordCorrect = async function (password) {
+  return await bcrypt.compare(password, this.password);
+};
+
+// Method to generate an access token for the user
+userSchema.methods.generateAccessToken = function () {
+  return jwt.sign(
+    {
+      _id: this._id,
+      email: this.email,
+      username: this.username,
+      fullName: this.fullName,
+    },
+    process.env.ACCESS_TOKEN_SECRET, // Secret key for signing the token
+    { expiresIn: process.env.ACCESS_TOKEN_EXPIRY } // Token expiration time
+  );
+};
+
+// Method to generate a refresh token for the user
+userSchema.methods.generateRefreshToken = function () {
+  return jwt.sign(
+    {
+      _id: this._id,
+    },
+    process.env.REFRESH_TOKEN_SECRET, // Secret key for signing the token
+    { expiresIn: process.env.REFRESH_TOKEN_EXPIRY } // Token expiration time
+  );
+};
+
+// Export the User model based on the defined schema
+export const User = mongoose.model("User", userSchema);
+
+```
+
+**jwt.sign explaination**
+```
+    // Method to generate an access token for the user
+    userSchema.methods.generateAccessToken = function () {
+    return jwt.sign(
+        {
+            _id: this._id,
+            email: this.email,
+            username: this.username,
+            fullName: this.fullName,
+        },
+        process.env.ACCESS_TOKEN_SECRET, // Secret key for signing the token
+        { expiresIn: process.env.ACCESS_TOKEN_EXPIRY } // Token expiration time
+        );
+    };
+```
+Here's an explanation of the parameters passed to jwt.sign:
+
+- **Payload:**
+
+  - The first argument to jwt.sign is the payload that will be included in the JWT. It's an object containing the data you want to encode into the token.
+  - In this case, the payload includes properties like _id, email, username, and fullName from the user object.
+
+- **Secret Key:**
+
+    - The second argument is the secret key used to sign the JWT. This key is known only to the server, and it's crucial for verifying the authenticity of the token.
+    - In the provided code, process.env.ACCESS_TOKEN_SECRET is used, which is likely stored in the environment variables for security.
+
+- **Options:**
+
+    - The third argument is an options object that includes configurations for the JWT.
+    - expiresIn: Specifies the expiration time for the token. It is set to process.env.ACCESS_TOKEN_EXPIRY in the code, indicating how long the token is valid.
+
+- **Return Value:**
+
+    - The jwt.sign method returns the signed JWT as a string.
+  
+- Putting it all together, the generateAccessToken method in the code generates a JWT with a payload containing user information, signs it with a secret key, and includes an expiration time. This token can then be used for authenticating and authorizing the user.
+
+
+## `user.controller.js`
+### Strategy
+
+```
 // Import necessary modules and functions
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/apiError.js";
@@ -244,3 +402,5 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
 
 // Export the functions for use in routes
 export { registerUser, loginUser, logoutUser, refreshAccessToken };
+
+```

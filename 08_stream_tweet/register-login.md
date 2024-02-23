@@ -1,4 +1,127 @@
-// Import necessary modules and functions
+`user.model.js`
+```
+import mongoose from "mongoose";
+import jwt from "jsonwebtoken";
+import bcrypt from "bcrypt";
+
+const userSchema = new mongoose.Schema(
+  {
+    watchHistory: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Video",
+      },
+    ],
+    username: {
+      type: String,
+      required: true,
+      unique: true,
+      lowercase: true,
+      trim: true,
+      index: true,
+    },
+    email: {
+      type: String,
+      required: true,
+      unique: true,
+      lowercase: true,
+      trim: true,
+    },
+    fullName: {
+      type: String,
+      required: true,
+    },
+    avatar: {
+      type: String, //cloudinary url
+      required: true,
+    },
+    coverImage: {
+      type: String, //cloudinary url
+    },
+    password: {
+      type: String,
+      required: [true, "Password is required"],
+    },
+    refreshToken: {
+      type: String,
+    },
+  },
+  { timestamps: true }
+);
+
+userSchema.pre("save", async function (next) {
+  if (!this.isModified("password")) return next();
+  this.password = await bcrypt.hash(this.password, 10);
+  next();
+});
+
+userSchema.methods.isPasswordCorrect = async function (password) {
+  return await bcrypt.compare(password, this.password);
+};
+
+userSchema.methods.generateAccessToken = function () {
+  return jwt.sign(
+    {
+      _id: this._id,
+      email: this.email,
+      username: this.username,
+      fullName: this.fullName,
+    },
+    process.env.ACCESS_TOKEN_SECRET,
+    { expiresIn: process.env.ACCESS_TOKEN_EXPIRY }
+  );
+};
+userSchema.methods.generateRefreshToken = function () {
+  return jwt.sign(
+    {
+      _id: this._id,
+    },
+    process.env.REFRESH_TOKEN_SECRET,
+    { expiresIn: process.env.REFRESH_TOKEN_EXPIRY }
+  );
+};
+export const User = mongoose.model("User", userSchema);
+
+```
+
+`user.routes.js`
+```
+import { Router } from "express";
+import { verifyJWT } from "../middlewares/auth.middleware.js";
+import {
+  loginUser,
+  logoutUser,
+  refreshAccessToken,
+  registerUser,
+} from "../controllers/user.controller.js";
+import { upload } from "../middlewares/multer.middleware.js";
+
+const router = Router();
+
+router.route("/register").post(
+  upload.fields([
+    {
+      name: "avatar", //frontend field ka bhi naam avatar hona chahiye
+      maxCount: 1,
+    },
+    {
+      name: "coverImage",
+      maxCount: 1,
+    },
+  ]),
+  registerUser
+);
+
+router.route("/login").post(loginUser);
+
+//secured routes
+router.route("/logout").post(verifyJWT, logoutUser);
+export default router;
+router.route("/refresh-token").post(refreshAccessToken);
+```
+
+`user.controller.js`
+```
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/apiError.js";
 import { ApiResponse } from "../utils/apiResponse.js";
@@ -6,24 +129,17 @@ import { User } from "../models/user.model.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import jwt from "jsonwebtoken";
 
-// Define a function to generate access and refresh tokens for a given user ID
 const generateAccessAndRefreshTokens = async (userId) => {
   try {
-    // Find the user by ID
     const user = await User.findById(userId);
-
-    // Generate access and refresh tokens using user's methods
     const accessToken = user.generateAccessToken();
     const refreshToken = user.generateRefreshToken();
 
-    // Update the user's refresh token in the database
     user.refreshToken = refreshToken;
     await user.save({ validateBeforeSave: false });
 
-    // Return the generated tokens
     return { accessToken, refreshToken };
   } catch (error) {
-    // Throw an error if something goes wrong during token generation
     throw new ApiError(
       500,
       "Something went wrong while generating access and refresh tokens"
@@ -31,7 +147,6 @@ const generateAccessAndRefreshTokens = async (userId) => {
   }
 };
 
-// Define a function to handle user registration
 const registerUser = asyncHandler(async (req, res) => {
   // get user details from frontend/postman
   const { username, email, fullName, password } = req.body;
@@ -50,7 +165,6 @@ const registerUser = asyncHandler(async (req, res) => {
     $or: [{ username }, { email }],
   });
 
-  // Throw an error if the user already exists
   if (existedUser) {
     throw new ApiError(409, "User with email or username already exists");
   }
@@ -62,8 +176,7 @@ const registerUser = asyncHandler(async (req, res) => {
   }
   // upload avatar to cloudinary
   const avatar = await uploadOnCloudinary(avatarLocalPath);
-
-  // Throw an error if avatar upload fails
+  console.log(avatar);
   if (!avatar) {
     throw new ApiError(400, "Avatar file is required");
   }
@@ -96,7 +209,6 @@ const registerUser = asyncHandler(async (req, res) => {
     "-password -refreshToken"
   );
 
-  // Throw an error if user creation fails
   if (!createdUser) {
     throw new ApiError(500, "Something went wrong while registering");
   }
@@ -107,7 +219,6 @@ const registerUser = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, createdUser, "User registered successfully"));
 });
 
-// Define a function to handle user login
 const loginUser = asyncHandler(async (req, res) => {
   // req body -> data
   const { email, username, password } = req.body;
@@ -116,37 +227,35 @@ const loginUser = asyncHandler(async (req, res) => {
     throw new ApiError(400, "username or email is required");
   }
 
+  // Here is an alternative of above code based on logic discussed in video:
+  // if (!(username || email)) {
+  //     throw new ApiError(400, "username or email is required")
+
+  // }
   // find the user
   const user = await User.findOne({ $or: [{ username }, { email }] });
   if (!user) {
     throw new ApiError(404, "User does not exist");
   }
-
   // check password
   const isPasswordValid = await user.isPasswordCorrect(password);
 
-  // Throw an error if the password is invalid
   if (!isPasswordValid) {
     throw new ApiError(401, "Invalid user credentials");
   }
-
   // access and refresh token
   const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(
     user._id
   );
-
-  // Retrieve the logged-in user details (excluding password and refresh token)
   const loggedInUser = await User.findById(user._id).select(
     "-password -refreshToken"
   );
-
   // send Cookie
   const options = {
     httpOnly: true,
     secure: true,
   };
 
-  // Set cookies in the response containing the access and refresh tokens
   return res
     .status(200)
     .cookie("accessToken", accessToken, options)
@@ -160,22 +269,17 @@ const loginUser = asyncHandler(async (req, res) => {
     );
 });
 
-// Define a function to handle user logout
 const logoutUser = asyncHandler(async (req, res) => {
-  // Update the user's refreshToken to undefined in the database
   User.findByIdAndUpdate(
     req.user._id,
     { $set: { refreshToken: undefined } },
     { new: true }
   );
 
-  // Configure options for clearing cookies
   const options = {
     httpOnly: true,
     secure: true,
   };
-
-  // Clear cookies in the response for accessToken and refreshToken
   return res
     .status(200)
     .clearCookie("accessToken", options)
@@ -183,48 +287,33 @@ const logoutUser = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, {}, "User logged out successfully"));
 });
 
-// Define a function to handle refreshing access tokens
 const refreshAccessToken = asyncHandler(async (req, res) => {
-  // Retrieve the incoming refreshToken from cookies or request body
   const incomingRefreshToken =
     req.cookies.refreshToken || req.body.refreshToken;
-
-  // Throw an error if no refreshToken is provided
   if (!incomingRefreshToken) {
-    throw new ApiError(401, "Unauthorized request");
+    throw new ApiError(401, "unauthorized request");
   }
 
   try {
-    // Verify the incoming refreshToken using the secret key
     const decodedToken = jwt.verify(
       incomingRefreshToken,
       process.env.REFRESH_TOKEN_SECRET
     );
-
-    // Find the user based on the decodedToken
     const user = await User.findById(decodedToken?._id);
-
-    // Throw an error if the user does not exist
     if (!user) {
       throw new ApiError(401, "Invalid Refresh Token");
     }
-
-    // Throw an error if the incoming refreshToken does not match the user's refreshToken
     if (incomingRefreshToken !== user?.refreshToken) {
       throw new ApiError(401, "Refresh token is expired or used");
     }
-
-    // Configure options for cookies
     const options = {
       httpOnly: true,
       secure: true,
     };
 
-    // Generate new access and refresh tokens
     const { accessToken, newRefreshToken } =
       await generateAccessAndRefreshTokens(user._id);
 
-    // Set cookies in the response containing the new access and refresh tokens
     return res
       .status(200)
       .cookie("accessToken", accessToken, options)
@@ -233,14 +322,61 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
         new ApiResponse(
           200,
           { accessToken, refreshToken: newRefreshToken },
-          "Access token refreshed"
+          "Access toke refreshed"
         )
       );
   } catch (error) {
-    // Throw an error if token verification fails
     throw new ApiError(401, error?.message || "Invalid Refresh Token");
   }
 });
-
-// Export the functions for use in routes
 export { registerUser, loginUser, logoutUser, refreshAccessToken };
+
+```
+
+`auth.middleware.js`
+```
+import jwt from "jsonwebtoken";
+import { ApiError } from "../utils/apiError.js";
+import { User } from "../models/user.model.js";
+
+export const verifyJWT = async (req, _, next) => {
+  try {
+    const token =
+      req.cookies?.accessToken ||
+      req.header("Authorization")?.replace("Bearer ", "");
+
+    if (!token) {
+      throw new ApiError(401, "Unauthorized Request");
+    }
+
+    const decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+    const user = await User.findById(decodedToken?._id).select(
+      "-password -refreshToken"
+    );
+    if (!user) {
+      throw new ApiError(401, "Invalid Access Token");
+    }
+    req.user = user;
+    next();
+  } catch (error) {
+    throw new ApiError(401, error?.message || "Invalid Access Token");
+  }
+};
+
+```
+`mutler.middleware.js`
+```
+import multer from "multer";
+
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, "./public/temp");
+  },
+  filename: function (req, file, cb) {
+    cb(null, Date.now() + file.originalname);
+  },
+});
+
+export const upload = multer({ storage: storage });
+
+```
